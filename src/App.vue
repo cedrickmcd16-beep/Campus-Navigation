@@ -1,35 +1,15 @@
 <template>
   <div style="display: flex; height: 100vh; overflow: hidden;">
 
-    <!-- SIDE BAR -->
-     <div style="
-     background-color: #f8f9fa;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-     margin-bottom: 15px;">
-  <button 
-    @click="isManageMode = !isManageMode"
-    style="
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      background-color: #333;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    "
-  >
-    {{ isManageMode ? "View Mode" : "Manage Mode" }}
-  </button>
-</div>
-
-      <div style="
+    <!-- SIDEBAR -->
+    <div style="
       width: 320px;
       padding: 20px;
       border-right: 1px solid #e5e5e5;
       overflow-y: auto;
       background-color: #fafafa;
-      ">
+    ">
+
       <h2 style="
         margin-bottom: 20px;
         color: #222;
@@ -37,6 +17,95 @@
       ">
         📍 Campus Navigation
       </h2>
+
+      <!-- LOGIN -->
+      <div v-if="!user" style="margin-bottom: 15px;">
+
+        <input
+          v-model="email"
+          placeholder="Admin email"
+          style="
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+          "
+        />
+
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Password"
+          style="
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+          "
+        />
+
+        <button
+          @click="login"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+          "
+        >
+          Login
+        </button>
+
+      </div>
+
+      <!-- MANAGE MODE -->
+      <div 
+        v-if="user"
+        style="
+          background-color: #f8f9fa;
+          box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+          margin-bottom: 15px;
+        "
+      >
+
+        <button 
+          @click="isManageMode = !isManageMode"
+          style="
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+          "
+        >
+          {{ isManageMode ? "View Mode" : "Manage Mode" }}
+        </button>
+
+        <button
+          @click="logout"
+          style="
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background-color: #dc3545;
+            color: white;
+            cursor: pointer;
+          "
+        >
+          Logout
+        </button>
+
+      </div>
 
       <input 
         v-model="searchQuery" 
@@ -182,7 +251,10 @@ export default {
       newClassroomName: '',
       newClassroomFloor: '',
       isManageMode: false,
-      hoveredBuilding: null
+      hoveredBuilding: null,
+      user: null,
+      email: '',
+      password: '',
     }
   },
 
@@ -196,7 +268,26 @@ export default {
         this.buildings = data
         this.drawMarkers(this.filteredBuildings)
       }
-    },
+    }, 
+        async login() {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: this.email,
+            password: this.password
+          })
+
+          if (error) {
+            alert(error.message)
+          } else {
+            this.user = data.user
+            alert('Login successful')
+          }
+        },
+
+        async logout() {
+          await supabase.auth.signOut()
+          this.user = null
+        },
+
 
     async addClassroom() {
       if (!this.newClassroomName || !this.newClassroomFloor) {
@@ -385,7 +476,7 @@ export default {
 
 <style>
 body {
+  margin: 0;
   font-family: Arial;
-  text-align: center;
 }
 </style>
