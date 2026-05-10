@@ -183,11 +183,6 @@
             {{ selectedBuilding.contact_email }}
           </p>
 
-          <p>
-            <strong>Hours:</strong>
-            {{ selectedBuilding.opening_hours }}
-          </p>
-
         </div>
 
         <h3>Classrooms</h3>
@@ -219,7 +214,7 @@
             style="display: flex; justify-content: space-between; align-items: center;"
           >
             <span 
-              @click="selectClassroom(room)"
+              @click="selectedClassroom = room"
               :style="{
                 cursor: 'pointer',
                 backgroundColor: selectedClassroom?.id === room.id ? '#d3f9d8' : ''
@@ -259,6 +254,48 @@
         <p><strong>Name:</strong> {{ selectedClassroom.name }}</p>
         <p><strong>Floor:</strong> {{ selectedClassroom.floor }}</p>
       </div>
+
+      <div
+  style="
+    margin-top: 20px;
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  "
+>
+
+  <h3>Feedback</h3>
+
+  <input
+    v-model="feedbackName"
+    placeholder="Your name"
+    style="width: 100%; margin-bottom: 8px;"
+  />
+
+  <input
+    v-model="feedbackContact"
+    placeholder="Contact info"
+    style="width: 100%; margin-bottom: 8px;"
+  />
+
+  <textarea
+    v-model="feedbackMessage"
+    placeholder="Your feedback..."
+    style="
+      width: 100%;
+      height: 80px;
+      margin-bottom: 8px;
+    "
+  ></textarea>
+
+  <button @click="submitFeedback">
+    Send Feedback
+  </button>
+
+</div>
+
+
     </div>
 
     <!-- MAP -->
@@ -290,7 +327,6 @@ export default {
       searchQuery: '',
       selectedMarker: null,
       selectedClassroom: null,
-      classroomMarker: null,
       newClassroomName: '',
       newClassroomFloor: '',
       isManageMode: false,
@@ -299,10 +335,60 @@ export default {
       email: '',
       password: '',
       sidebarOpen: false,
+      feedbackName: '',
+      feedbackContact: '',
+      feedbackMessage: '',
     }
   },
 
   methods: {
+
+        async submitFeedback() {
+
+      if (!this.feedbackMessage) {
+        alert("Please write feedback")
+        return
+      }
+
+      const { error } = await supabase
+        .from('feedback')
+        .insert([
+          {
+            name: this.feedbackName,
+            contact: this.feedbackContact,
+            message: this.feedbackMessage
+          }
+        ])
+
+      if (error) {
+        alert("Error sending feedback")
+      } else {
+
+        alert("Feedback sent")
+
+        this.feedbackName = ''
+        this.feedbackContact = ''
+        this.feedbackMessage = ''
+      }
+    },
+
+        showUserLocation() {
+
+      navigator.geolocation.getCurrentPosition(position => {
+
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
+        L.marker([lat, lng])
+          .addTo(this.map)
+          .bindPopup("You are here")
+          .openPopup()
+
+        this.map.flyTo([lat, lng], 16)
+
+      })
+
+    },
     async loadBuildings() {
       const { data, error } = await supabase
         .from('buildings')
@@ -361,42 +447,8 @@ export default {
       }
     },
 
-    selectClassroom(room) {
-        this.selectedClassroom = room
-
-        // remove old classroom marker
-        if (this.classroomMarker) {
-          this.map.removeLayer(this.classroomMarker)
-        }
-
-        const building = this.selectedBuilding
-
-        // find index of classroom
-        const index = this.classrooms.findIndex(r => r.id === room.id)
-
-        // small fixed offsets
-        const offsets = [
-          [0, 0.0003],    // right
-          [0, -0.0003],   // left
-          [0.0003, 0],    // up
-          [-0.0003, 0]    // down
-        ]
-
-        const offset = offsets[index % offsets.length]
-
-        const lat = building.latitude + offset[0]
-        const lng = building.longitude + offset[1]
-
-        // create marker
-        this.classroomMarker = L.marker([lat, lng]).addTo(this.map)
-
-        this.classroomMarker
-          .bindPopup(`${room.name} (${room.floor})`)
-          .openPopup()
-
-    },
-
     async loadClassrooms(buildingId) {
+      this.selectedClassroom = null
       this.selectedBuilding = this.buildings.find(
         b => b.id === buildingId
       )
@@ -412,13 +464,40 @@ export default {
     },
 
     handleBuildingClick(building) {
+
+      // reset classroom selection
+      this.selectedClassroom = null
+
+      // show only selected building marker
+      this.markers.forEach(m => {
+
+        if (m.building.id === building.id) {
+
+          m.marker.addTo(this.map)
+
+          this.selectedMarker = m.marker
+
+        } else {
+
+          this.map.removeLayer(m.marker)
+
+        }
+
+      })
+
+      // zoom
       this.map.flyTo(
         [building.latitude, building.longitude],
         18
       )
 
+      // load classrooms
       this.loadClassrooms(building.id)
+
+      // close mobile sidebar automatically
+      this.sidebarOpen = false
     },
+
 
       drawMarkers(buildingsList) {
     // remove old markers
@@ -448,21 +527,7 @@ export default {
         this.markers.push({ marker, building })
 
         marker.on('click', () => {
-          // reset previous selected marker
-          if (this.selectedMarker) {
-            this.selectedMarker.setIcon(defaultIcon)
-          }
-
-          // highlight current marker
-          marker.setIcon(selectedIcon)
-          this.selectedMarker = marker
-
-          this.map.flyTo(
-            [building.latitude, building.longitude],
-            18
-          )
-
-          this.loadClassrooms(building.id)
+          this.handleBuildingClick(building)
         })
       }
     })
@@ -513,6 +578,7 @@ export default {
     }).addTo(this.map)
 
     this.loadBuildings()
+    this.showUserLocation()
   }
 }
 </script>
@@ -549,7 +615,7 @@ body {
   .mobile-menu-btn {
     display: block;
     position: absolute;
-    top: 15px;
+    top: env(safe-area-inset-top, 70px);
     left: 15px;
     z-index: 2000;
     border: none;
