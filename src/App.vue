@@ -149,6 +149,47 @@
       </ul>
 
       <div v-if="selectedBuilding">
+
+        <div
+          style="
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+          "
+        >
+          <img
+            v-if="selectedBuilding.image_url"
+            :src="selectedBuilding.image_url"
+            style="
+              width: 100%;
+              height: 160px;
+              object-fit: cover;
+              border-radius: 8px;
+              margin-bottom: 10px;
+            "
+          />
+          <h3 style="margin-bottom: 8px;">
+            {{ selectedBuilding.name }}
+          </h3>
+
+          <p style="margin-bottom: 8px; color: #555;">
+            {{ selectedBuilding.description }}
+          </p>
+
+          <p>
+            <strong>Email:</strong>
+            {{ selectedBuilding.contact_email }}
+          </p>
+
+          <p>
+            <strong>Hours:</strong>
+            {{ selectedBuilding.opening_hours }}
+          </p>
+
+        </div>
+
         <h3>Classrooms</h3>
 
         <div v-if="selectedBuilding && isManageMode" style="margin-top: 15px;">
