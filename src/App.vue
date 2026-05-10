@@ -1,14 +1,16 @@
 <template>
   <div style="display: flex; height: 100vh; overflow: hidden;">
 
+    <!-- MOBILE MENU BUTTON -->
+      <button
+        @click="sidebarOpen = !sidebarOpen"
+        class="mobile-menu-btn"
+      >
+        ☰
+      </button>
+
     <!-- SIDEBAR -->
-    <div style="
-      width: 320px;
-      padding: 20px;
-      border-right: 1px solid #e5e5e5;
-      overflow-y: auto;
-      background-color: #fafafa;
-    ">
+    <div :class="['sidebar', { open: sidebarOpen }]">
 
       <h2 style="
         margin-bottom: 20px;
@@ -255,6 +257,7 @@ export default {
       user: null,
       email: '',
       password: '',
+      sidebarOpen: false,
     }
   },
 
@@ -478,5 +481,57 @@ export default {
 body {
   margin: 0;
   font-family: Arial;
+}
+
+#app {
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 320px;
+  padding: 20px;
+  border-right: 1px solid #e5e5e5;
+  overflow-y: auto;
+  background-color: #fafafa;
+  transition: transform 0.3s ease;
+}
+
+/* MOBILE BUTTON */
+.mobile-menu-btn {
+  display: none;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  .mobile-menu-btn {
+    display: block;
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    border: none;
+    border-radius: 6px;
+    background: #333;
+    color: white;
+    padding: 10px 14px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 1500;
+    transform: translateX(-100%);
+    width: 280px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
 </style>
