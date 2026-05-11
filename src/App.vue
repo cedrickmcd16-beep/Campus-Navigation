@@ -376,19 +376,26 @@ export default {
 
       navigator.geolocation.getCurrentPosition(position => {
 
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
+    const lat = position.coords.latitude
+    const lng = position.coords.longitude
 
-        L.marker([lat, lng])
-          .addTo(this.map)
-          .bindPopup("You are here")
-          .openPopup()
+    const userIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
+      iconSize: [35, 35]
+    })
 
-        this.map.flyTo([lat, lng], 16)
+    L.marker([lat, lng], {
+      icon: userIcon
+    })
+      .addTo(this.map)
+      .bindPopup("You are here")
+      .openPopup()
 
-      })
+    this.map.flyTo([lat, lng], 16)
 
-    },
+  })
+
+},
     async loadBuildings() {
       const { data, error } = await supabase
         .from('buildings')
