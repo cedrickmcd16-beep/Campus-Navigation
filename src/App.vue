@@ -122,6 +122,10 @@
         "
       />
 
+      <button @click="drawMarkers(filteredBuildings)">
+        Show All Buildings
+      </button>
+
       <h4 style="margin-bottom: 5px;">Buildings</h4>
       <ul>
         <li 
